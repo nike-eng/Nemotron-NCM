@@ -1,0 +1,7 @@
+"AppBuild"
+{
+	"AppID" "480"
+	"Desc" "TitanLootEconomy Steam Build"
+	"ContentRoot" "./target/release/"
+	"BuildOutput" "./steam_output/"
+}

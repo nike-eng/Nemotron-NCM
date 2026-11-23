@@ -1,0 +1,33 @@
+name: Titan Polyglot Engine - Steam Multi-Platform Build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-steam-binaries:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: cyberarenaengine-linux-steamdeck
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: cyberarenaengine-win64.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: cyberarenaengine-macos
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Compile Release Engine Binary
+        working-directory: ./CyberArenaEngine
+        run: cargo build --release
+      - name: Upload Steamworks Depot Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: CyberArenaEngine/target/release/cyberarenaengine*

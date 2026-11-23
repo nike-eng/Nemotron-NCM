@@ -1,0 +1,7 @@
+"AppBuild"
+{
+	"AppID" "480"
+	"Desc" "TitanMultiplayerSync Steam Build"
+	"ContentRoot" "./target/release/"
+	"BuildOutput" "./steam_output/"
+}
