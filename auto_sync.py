@@ -24,6 +24,46 @@ def setup_auto_git(github_user: str, repo_name: str, github_token: str, email: s
 def sync_now(commit_msg: str = None):
     if not os.path.exists(os.path.join(STAGE_DIR, ".git")):
         raise RuntimeError("Run setup_auto_git(...) once first!")
+import json, os, subprocess
+from datetime import datetime, timezone
+
+def write_session_state(
+    work_dir="/kaggle/working/AI_Cyberdeck",
+    blox_repo="nike-eng/Blox-Studio",
+    ncm_repo="nike-eng/Nemotron-NCM",
+):
+    dataset_path = os.path.join(work_dir, "cyberdeck_verified_dataset.jsonl")
+    lora_dir = os.path.join(work_dir, "titan_engine_lora")
+
+    verified_count = 0
+    last_task = "none"
+    if os.path.exists(dataset_path):
+        with open(dataset_path, "r", encoding="utf-8") as f:
+            lines = [ln.strip() for ln in f if ln.strip()]
+            verified_count = len(lines)
+            if lines:
+                try:
+                    last_task = json.loads(lines[-1]).get("task", "unknown")[:60]
+                except Exception:
+                    last_task = "parsed_entry"
+
+    lora_ready = os.path.exists(os.path.join(lora_dir, "adapter_model.safetensors")) or os.path.exists(
+        os.path.join(lora_dir, "adapter_model.bin")
+    )
+
+    # Check disk headroom on /kaggle/working
+    st = os.statvfs("/kaggle/working")
+    free_gb = round((st.f_bavail * st.f_frsize) / (1024**3), 2)
+
+    state_md = f"""# SESSION_STATE (AUTO-GENERATED)
+- **Updated (UTC):** {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")}
+- **Active Repo:** `{ncm_repo}` | **Sibling Sync Repo:** `{blox_repo}`
+- **Verified Builds (`cyberdeck_verified_dataset.jsonl`):** {verified_count} (Last: `{last_task}`)
+- **LoRA Adapter (`titan_engine_lora/`):** {"READY" if lora_ready else "MISSING"}
+- **`/kaggle/working` Free Disk:** {free_gb} GB / 19.5 GB
+"""
+    with open(os.path.join(work_dir, "SESSION_STATE.md"), "w", encoding="utf-8") as f:
+        f.write(state_md)
 
     # Mirror clean files from Google Drive to /tmp staging (skipping heavy target/ build artifacts)
     for item in os.listdir(STAGE_DIR):
